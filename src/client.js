@@ -10,6 +10,8 @@ const { antiraidService } = require('./services/antiraidService');
 const { eventLogService } = require('./services/eventLogService');
 const { logger } = require('./utils/logger');
 
+const { loadFromApplication } = require('./embeds/emojiRegistry');
+
 function createClient() {
   const client = new Client({
     intents: [
@@ -23,12 +25,19 @@ function createClient() {
       Partials.Channel,
       Partials.User,
       Partials.GuildMember
-    ]
+    ],
+    allowedMentions: {
+      parse: [],
+      repliedUser: false
+    }
   });
 
-  client.once(Events.ClientReady, (readyClient) => {
+  client.once(Events.ClientReady, async (readyClient) => {
     logger.info(`VOID online as ${readyClient.user.tag} (ID: ${readyClient.user.id})`);
     logger.info(`Serving ${readyClient.guilds.cache.size} server(s). Default prefix: .?`);
+
+    // Auto-fetch and resolve Developer Portal custom emojis
+    await loadFromApplication(readyClient);
   });
 
   // Core command listeners

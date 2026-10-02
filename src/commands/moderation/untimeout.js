@@ -106,13 +106,20 @@ module.exports = {
       channelName: ctx.channel.name
     });
 
-    // 7. Response
+    // 7. Query history
+    const history = await ctx.services.moderationService.getTargetStats(ctx.guild.id, targetUser.id);
+
+    // 8. Response
     const embed = voidEmbeds.moderationAction({
       action: 'Timeout Removed',
       target: targetUser,
+      targetMember,
       moderator: ctx.user,
       reason,
-      caseNumber
+      caseNumber,
+      guild: ctx.guild,
+      history,
+      channelName: ctx.channel.name
     });
 
     return ctx.reply({ embeds: [embed] });

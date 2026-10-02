@@ -111,16 +111,24 @@ module.exports = {
       return ctx.error('VOID is unable to timeout this member due to role hierarchy.');
     }
 
-    // 5. Apply timeout
+    // 5. Attempt DM notification before timeout
+    const formattedDuration = formatDuration(durationMs);
+    const dmStatus = await ctx.services.moderationService.notifyTargetDM({
+      target: targetUser,
+      action: 'TIMEOUT',
+      guild: ctx.guild,
+      duration: formattedDuration,
+      reason
+    });
+
+    // 6. Apply timeout
     try {
       await targetMember.timeout(durationMs, `${reason} | Moderator: ${ctx.user.tag || ctx.user.username}`);
     } catch (err) {
       return ctx.error(`Failed to timeout member: ${err.message}`);
     }
 
-    const formattedDuration = formatDuration(durationMs);
-
-    // 6. Record case
+    // 7. Record case
     const { caseNumber } = await ctx.services.moderationService.recordAction({
       guild: ctx.guild,
       target: targetUser,
@@ -128,17 +136,26 @@ module.exports = {
       action: 'TIMEOUT',
       reason,
       duration: formattedDuration,
-      channelName: ctx.channel.name
+      channelName: ctx.channel.name,
+      dmStatus
     });
 
-    // 7. Response
+    // 8. Query history
+    const history = await ctx.services.moderationService.getTargetStats(ctx.guild.id, targetUser.id);
+
+    // 9. Response
     const embed = voidEmbeds.moderationAction({
       action: 'Timed Out',
       target: targetUser,
+      targetMember,
       moderator: ctx.user,
       duration: formattedDuration,
       reason,
-      caseNumber
+      caseNumber,
+      guild: ctx.guild,
+      dmStatus,
+      history,
+      channelName: ctx.channel.name
     });
 
     return ctx.reply({ embeds: [embed] });

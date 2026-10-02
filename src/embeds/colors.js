@@ -1,22 +1,22 @@
 /**
  * VOID Color Palette
- * Minimalist black & charcoal aesthetic.
+ * Genuinely pure black visual identity (#000000 / 0x000000).
  */
 const COLORS = {
   BLACK: 0x000000,
-  CHARCOAL: 0x111111,
-  PANEL: 0x181818,
-  BORDER: 0x292929,
-  MUTED: 0x3a3a3a,
-  WHITE: 0xf5f5f5,
+  CHARCOAL: 0x000000,
+  PANEL: 0x000000,
+  BORDER: 0x000000,
+  MUTED: 0x000000,
+  WHITE: 0xffffff,
   SILVER: 0xa0a0a0,
 
-  // Semantic mappings retaining the monochrome aesthetic
-  DEFAULT: 0x111111,
-  SUCCESS: 0x111111,
-  ERROR: 0x181818,
-  WARN: 0x1c1c1c,
-  INFO: 0x111111
+  // All semantic embed mappings resolve strictly to pure black (#000000)
+  DEFAULT: 0x000000,
+  SUCCESS: 0x000000,
+  ERROR: 0x000000,
+  WARN: 0x000000,
+  INFO: 0x000000
 };
 
 module.exports = { COLORS };

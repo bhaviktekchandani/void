@@ -7,6 +7,7 @@ const { commandRegistry } = require('../commands/registry');
 const { CommandContext } = require('../commands/context');
 const { prefixService } = require('../services/prefixService');
 const { automodService } = require('../services/automodService');
+const { noPrefixService } = require('../services/noPrefixService');
 const { parsePrefixMessage } = require('../utils/argumentParser');
 const { handleCommandError } = require('./errorHandler');
 
@@ -28,8 +29,22 @@ async function handleMessage(message) {
   // 2. Retrieve server prefix (cached with .? default)
   const prefix = await prefixService.getPrefix(message.guild.id);
 
-  // Fast check: message must start with active prefix
-  const parsed = parsePrefixMessage(message.content, prefix);
+  // 3. Evaluate prefix command or authorized no-prefix command
+  let parsed = parsePrefixMessage(message.content, prefix);
+  let usedNoPrefix = false;
+
+  if (!parsed.isCommand) {
+    // If not matching guild prefix, check if author has no-prefix authorization
+    if (noPrefixService.isUserAllowed(message.author.id)) {
+      const noPrefixParsed = noPrefixService.parseNoPrefixMessage(message.content, commandRegistry);
+      if (noPrefixParsed.isCommand) {
+        parsed = noPrefixParsed;
+        usedNoPrefix = true;
+      }
+    }
+  }
+
+  // If not a command, silently ignore (safely ignores ordinary conversations)
   if (!parsed.isCommand) return;
 
   const command = commandRegistry.get(parsed.commandName);
@@ -38,7 +53,7 @@ async function handleMessage(message) {
     return;
   }
 
-  // 3. Parse command arguments using command's specific parser or default tokens
+  // 4. Parse command arguments using command's specific parser or default tokens
   let parsedArgs = {};
   if (typeof command.parsePrefixArgs === 'function') {
     parsedArgs = command.parsePrefixArgs(parsed.tokens, parsed.rawArgs);
@@ -50,7 +65,8 @@ async function handleMessage(message) {
     commandName: parsed.commandName,
     prefix,
     parsedArgs,
-    tokens: parsed.tokens
+    tokens: parsed.tokens,
+    usedNoPrefix
   });
 
   try {

@@ -13,11 +13,11 @@ describe('Shared Command Registry & Execution Layer', () => {
     'ban', 'unban', 'kick', 'timeout', 'untimeout',
     'warn', 'warnings', 'clearwarnings', 'softban', 'purge',
     'lock', 'unlock', 'slowmode', 'case', 'reason',
-    'modhistory', 'notes', 'help', 'userinfo', 'avatar', 'botinfo',
-    'prefix', 'config', 'setup', 'automod', 'antiraid'
+    'modhistory', 'notes', 'help', 'userinfo', 'serverinfo', 'avatar', 'botinfo',
+    'prefix', 'config', 'setup', 'automod', 'antiraid', 'noprefix'
   ];
 
-  test('loads all 26 expected commands', () => {
+  test('loads all 28 expected commands', () => {
     for (const cmdName of EXPECTED_COMMANDS) {
       const cmd = commandRegistry.get(cmdName);
       assert.ok(cmd, `Command '${cmdName}' should be registered`);
@@ -108,5 +108,11 @@ describe('Shared Command Registry & Execution Layer', () => {
     // Verify both produce identical title, fields count, and categories
     assert.equal(slashEmbedJson.title, prefixEmbedJson.title);
     assert.equal(slashEmbedJson.fields.length, prefixEmbedJson.fields.length);
+
+    // Verify both enforce pure black (#000000) and zero unnecessary pings
+    assert.equal(slashEmbedJson.color, 0x000000);
+    assert.equal(prefixEmbedJson.color, 0x000000);
+    assert.deepEqual(slashRepliedPayload.allowedMentions, { parse: [], repliedUser: false });
+    assert.deepEqual(prefixRepliedPayload.allowedMentions, { parse: [], repliedUser: false });
   });
 });

@@ -87,30 +87,47 @@ module.exports = {
       return ctx.error('VOID is unable to kick this member due to role hierarchy.');
     }
 
-    // 4. Execute kick
+    // 4. Attempt DM notification before kick
+    const dmStatus = await ctx.services.moderationService.notifyTargetDM({
+      target: targetUser,
+      action: 'KICK',
+      guild: ctx.guild,
+      reason
+    });
+
+    // 5. Execute kick
     try {
       await targetMember.kick(`${reason} | Moderator: ${ctx.user.tag || ctx.user.username}`);
     } catch (err) {
       return ctx.error(`Failed to kick member: ${err.message}`);
     }
 
-    // 5. Record case
+    // 6. Record case
     const { caseNumber } = await ctx.services.moderationService.recordAction({
       guild: ctx.guild,
       target: targetUser,
       moderator: ctx.user,
       action: 'KICK',
       reason,
-      channelName: ctx.channel.name
+      channelName: ctx.channel.name,
+      dmStatus
     });
 
-    // 6. Response
+    // 7. Query history
+    const history = await ctx.services.moderationService.getTargetStats(ctx.guild.id, targetUser.id);
+
+    // 8. Response
     const embed = voidEmbeds.moderationAction({
       action: 'Kicked',
       target: targetUser,
+      targetMember,
       moderator: ctx.user,
       reason,
-      caseNumber
+      caseNumber,
+      guild: ctx.guild,
+      dmStatus,
+      history,
+      channelName: ctx.channel.name
     });
 
     return ctx.reply({ embeds: [embed] });

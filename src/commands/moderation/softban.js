@@ -83,7 +83,15 @@ module.exports = {
       return ctx.error(hierarchy.reason);
     }
 
-    // 4. Execute softban: Ban with 7-day message delete, then unban immediately
+    // 4. Attempt DM notification before eviction
+    const dmStatus = await ctx.services.moderationService.notifyTargetDM({
+      target: targetUser,
+      action: 'SOFTBAN',
+      guild: ctx.guild,
+      reason
+    });
+
+    // 5. Execute softban: Ban with 7-day message delete, then unban immediately
     try {
       await ctx.guild.bans.create(targetUser.id, {
         deleteMessageSeconds: 7 * 86400,
@@ -95,23 +103,32 @@ module.exports = {
       return ctx.error(`Failed to softban member: ${err.message}`);
     }
 
-    // 5. Record case
+    // 6. Record case
     const { caseNumber } = await ctx.services.moderationService.recordAction({
       guild: ctx.guild,
       target: targetUser,
       moderator: ctx.user,
       action: 'SOFTBAN',
       reason,
-      channelName: ctx.channel.name
+      channelName: ctx.channel.name,
+      dmStatus
     });
 
-    // 6. Response
+    // 7. Query history
+    const history = await ctx.services.moderationService.getTargetStats(ctx.guild.id, targetUser.id);
+
+    // 8. Response
     const embed = voidEmbeds.moderationAction({
       action: 'Softbanned',
       target: targetUser,
+      targetMember,
       moderator: ctx.user,
       reason,
-      caseNumber
+      caseNumber,
+      guild: ctx.guild,
+      dmStatus,
+      history,
+      channelName: ctx.channel.name
     });
 
     return ctx.reply({ embeds: [embed] });

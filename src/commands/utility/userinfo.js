@@ -42,9 +42,15 @@ module.exports = {
       targetMember = await ctx.guild.members.fetch(targetUser.id).catch(() => null);
     }
 
+    let history = null;
+    if (ctx.guild) {
+      history = await ctx.services.moderationService.getTargetStats(ctx.guild.id, targetUser.id);
+    }
+
     const embed = voidEmbeds.userInfo({
       user: targetUser,
-      member: targetMember
+      member: targetMember,
+      history
     });
 
     return ctx.reply({ embeds: [embed] });

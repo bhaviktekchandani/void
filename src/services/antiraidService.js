@@ -147,7 +147,7 @@ class AntiRaidService {
         `Use \`${gCfg.prefix}antiraid clear\` or \`/antiraid clear\` to reset.`
       );
 
-      await logChan.send({ embeds: [alertEmbed] });
+      await logChan.send({ embeds: [alertEmbed], allowedMentions: { parse: [] } });
     } catch (err) {
       logger.error('Failed to dispatch anti-raid alert', err);
     }

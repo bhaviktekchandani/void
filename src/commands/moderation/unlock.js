@@ -69,7 +69,11 @@ module.exports = {
     });
 
     // 4. Response
-    const embed = voidEmbeds.success(`Channel \`#${ctx.channel.name}\` has been **unlocked** (permissions restored).`);
+    const embed = voidEmbeds.unlockReport({
+      channel: ctx.channel,
+      moderator: ctx.user,
+      reason
+    });
     return ctx.reply({ embeds: [embed] });
   }
 };

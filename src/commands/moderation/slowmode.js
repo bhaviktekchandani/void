@@ -75,10 +75,13 @@ module.exports = {
     });
 
     // 5. Response
-    const msg = seconds === 0
-      ? `Slowmode has been **disabled** in \`#${ctx.channel.name}\`.`
-      : `Slowmode for \`#${ctx.channel.name}\` set to **${seconds} second${seconds === 1 ? '' : 's'}**.`;
+    const embed = voidEmbeds.slowmodeReport({
+      channel: ctx.channel,
+      seconds,
+      moderator: ctx.user,
+      reason: seconds === 0 ? 'Disabled slowmode' : `Set slowmode to ${seconds}s`
+    });
 
-    return ctx.reply({ embeds: [voidEmbeds.success(msg)] });
+    return ctx.reply({ embeds: [embed] });
   }
 };

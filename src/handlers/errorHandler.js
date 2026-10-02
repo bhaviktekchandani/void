@@ -22,7 +22,10 @@ async function handleCommandError(err, ctx) {
           await ctx.interaction.reply({ embeds: [voidEmbeds.error(userMessage)], ephemeral: true }).catch(() => null);
         }
       } else if (ctx.message) {
-        await ctx.message.reply({ embeds: [voidEmbeds.error(userMessage)] }).catch(() => null);
+        await ctx.message.reply({
+          embeds: [voidEmbeds.error(userMessage)],
+          allowedMentions: { parse: [], repliedUser: false }
+        }).catch(() => null);
       }
     }
   } catch (replyErr) {

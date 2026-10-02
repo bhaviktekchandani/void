@@ -30,6 +30,12 @@ module.exports = {
     const guildsCount = ctx.client.guilds.cache.size;
     const usersCount = ctx.client.users.cache.size;
     const nodeVersion = process.version;
+    const mem = process.memoryUsage();
+    const memory = {
+      rss: `${Math.round(mem.rss / 1024 / 1024)} MB`,
+      heap: `${Math.round(mem.heapUsed / 1024 / 1024)} MB`
+    };
+    const ping = ctx.client.ws?.ping ?? 0;
 
     return ctx.reply({
       embeds: [voidEmbeds.botInfo({
@@ -37,7 +43,10 @@ module.exports = {
         guildsCount,
         usersCount,
         nodeVersion,
-        djsVersion
+        djsVersion,
+        memory,
+        ping,
+        commandCount: 28
       })]
     });
   }

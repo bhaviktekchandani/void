@@ -1,6 +1,7 @@
 /**
  * VOID Event Log Service
  * Dispatches audit embeds for joins, leaves, member role/nickname/timeout updates, and bans.
+ * Enforces pure black UI (#000000) and zero unnecessary pings.
  */
 
 const { configService } = require('./configService');
@@ -29,14 +30,14 @@ class EventLogService {
     if (!channel) return;
 
     const embed = voidEmbeds.createBaseEmbed();
-    embed.setTitle(`Member Joined`);
+    embed.setTitle('Member Joined');
     embed.setDescription(
-      `**User:** ${member.user.tag} \`(${member.user.id})\`\n` +
+      `**User:** ${member.user.tag || member.user.username} \`(${member.user.id})\`\n` +
       `**Account Created:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`
     );
     embed.setThumbnail(member.user.displayAvatarURL());
 
-    await channel.send({ embeds: [embed] }).catch(() => null);
+    await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
   }
 
   async logMemberLeave(member) {
@@ -44,26 +45,28 @@ class EventLogService {
     if (!channel) return;
 
     const embed = voidEmbeds.createBaseEmbed();
-    embed.setTitle(`Member Left`);
+    embed.setTitle('Member Left');
     embed.setDescription(`**User:** ${member.user.tag || member.user.username} \`(${member.user.id})\``);
 
-    await channel.send({ embeds: [embed] }).catch(() => null);
+    await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
   }
 
   async logMemberUpdate(oldMember, newMember) {
     const channel = await this.getChannel(newMember.guild);
     if (!channel) return;
 
+    const userTag = newMember.user?.tag || newMember.user?.username || newMember.id;
+
     // 1. Nickname changes
     if (oldMember.nickname !== newMember.nickname) {
       const embed = voidEmbeds.createBaseEmbed();
-      embed.setTitle(`Nickname Changed`);
+      embed.setTitle('Nickname Changed');
       embed.setDescription(
-        `**User:** <@${newMember.id}> \`(${newMember.id})\`\n` +
+        `**User:** ${userTag} \`(${newMember.id})\`\n` +
         `**Before:** \`${oldMember.nickname || 'None'}\`\n` +
         `**After:** \`${newMember.nickname || 'None'}\``
       );
-      await channel.send({ embeds: [embed] }).catch(() => null);
+      await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
       return;
     }
 
@@ -74,20 +77,20 @@ class EventLogService {
 
     if ((!oldTimeout || oldTimeout <= now) && (newTimeout && newTimeout > now)) {
       const embed = voidEmbeds.createBaseEmbed();
-      embed.setTitle(`Timeout Applied`);
+      embed.setTitle('Timeout Applied');
       embed.setDescription(
-        `**User:** <@${newMember.id}> \`(${newMember.id})\`\n` +
+        `**User:** ${userTag} \`(${newMember.id})\`\n` +
         `**Expires:** <t:${Math.floor(newTimeout / 1000)}:R>`
       );
-      await channel.send({ embeds: [embed] }).catch(() => null);
+      await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
       return;
     }
 
     if ((oldTimeout && oldTimeout > now) && (!newTimeout || newTimeout <= now)) {
       const embed = voidEmbeds.createBaseEmbed();
-      embed.setTitle(`Timeout Removed`);
-      embed.setDescription(`**User:** <@${newMember.id}> \`(${newMember.id})\``);
-      await channel.send({ embeds: [embed] }).catch(() => null);
+      embed.setTitle('Timeout Removed');
+      embed.setDescription(`**User:** ${userTag} \`(${newMember.id})\``);
+      await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
       return;
     }
 
@@ -97,16 +100,16 @@ class EventLogService {
 
     if (addedRoles.size > 0 || removedRoles.size > 0) {
       const embed = voidEmbeds.createBaseEmbed();
-      embed.setTitle(`Roles Updated`);
-      const lines = [`**User:** <@${newMember.id}>`];
+      embed.setTitle('Roles Updated');
+      const lines = [`**User:** ${userTag} \`(${newMember.id})\``];
       if (addedRoles.size > 0) {
-        lines.push(`**Added:** ${addedRoles.map(r => `<@&${r.id}>`).join(' ')}`);
+        lines.push(`**Added:** ${addedRoles.map(r => `@${r.name}`).join(', ')}`);
       }
       if (removedRoles.size > 0) {
-        lines.push(`**Removed:** ${removedRoles.map(r => `<@&${r.id}>`).join(' ')}`);
+        lines.push(`**Removed:** ${removedRoles.map(r => `@${r.name}`).join(', ')}`);
       }
       embed.setDescription(lines.join('\n'));
-      await channel.send({ embeds: [embed] }).catch(() => null);
+      await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
     }
   }
 
@@ -115,12 +118,12 @@ class EventLogService {
     if (!channel) return;
 
     const embed = voidEmbeds.createBaseEmbed();
-    embed.setTitle(`User Banned`);
+    embed.setTitle('User Banned');
     embed.setDescription(
       `**User:** ${ban.user.tag || ban.user.username} \`(${ban.user.id})\`\n` +
       `**Audit Reason:** ${ban.reason || 'None provided'}`
     );
-    await channel.send({ embeds: [embed] }).catch(() => null);
+    await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
   }
 
   async logBanRemove(ban) {
@@ -128,9 +131,9 @@ class EventLogService {
     if (!channel) return;
 
     const embed = voidEmbeds.createBaseEmbed();
-    embed.setTitle(`User Unbanned`);
+    embed.setTitle('User Unbanned');
     embed.setDescription(`**User:** ${ban.user.tag || ban.user.username} \`(${ban.user.id})\``);
-    await channel.send({ embeds: [embed] }).catch(() => null);
+    await channel.send({ embeds: [embed], allowedMentions: { parse: [] } }).catch(() => null);
   }
 }
 

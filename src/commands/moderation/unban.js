@@ -94,13 +94,19 @@ module.exports = {
       channelName: ctx.channel.name
     });
 
-    // 6. Response
+    // 6. Query history
+    const history = await ctx.services.moderationService.getTargetStats(ctx.guild.id, targetUser.id);
+
+    // 7. Response
     const embed = voidEmbeds.moderationAction({
       action: 'Unbanned',
       target: targetUser,
       moderator: ctx.user,
       reason,
-      caseNumber
+      caseNumber,
+      guild: ctx.guild,
+      history,
+      channelName: ctx.channel.name
     });
 
     return ctx.reply({ embeds: [embed] });

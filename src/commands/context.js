@@ -14,6 +14,7 @@ const { automodService } = require('../services/automodService');
 const { antiraidService } = require('../services/antiraidService');
 const { lockService } = require('../services/lockService');
 const { eventLogService } = require('../services/eventLogService');
+const { noPrefixService } = require('../services/noPrefixService');
 
 class CommandContext {
   /**
@@ -25,8 +26,9 @@ class CommandContext {
    * @param {string} params.prefix
    * @param {object} [params.parsedArgs] Key-value pairs for prefix commands
    * @param {string[]} [params.tokens] Raw positional tokens
+   * @param {boolean} [params.usedNoPrefix] True if invoked via no-prefix system
    */
-  constructor({ isSlash, interaction = null, message = null, commandName, prefix = '.?', parsedArgs = {}, tokens = [] }) {
+  constructor({ isSlash, interaction = null, message = null, commandName, prefix = '.?', parsedArgs = {}, tokens = [], usedNoPrefix = false }) {
     this.isSlash = isSlash;
     this.interaction = interaction;
     this.message = message;
@@ -34,6 +36,7 @@ class CommandContext {
     this.prefix = prefix;
     this.parsedArgs = parsedArgs;
     this.tokens = tokens;
+    this.usedNoPrefix = usedNoPrefix;
 
     this.guild = isSlash ? interaction.guild : message.guild;
     this.channel = isSlash ? interaction.channel : message.channel;
@@ -51,7 +54,8 @@ class CommandContext {
       automodService,
       antiraidService,
       lockService,
-      eventLogService
+      eventLogService,
+      noPrefixService
     };
 
     this.replied = false;
@@ -175,7 +179,15 @@ class CommandContext {
    * @param {string|object} options
    */
   async reply(options) {
-    const payload = typeof options === 'string' ? { content: options } : options;
+    const rawPayload = typeof options === 'string' ? { content: options } : (options || {});
+    const payload = {
+      ...rawPayload,
+      allowedMentions: {
+        parse: [],
+        repliedUser: false,
+        ...(rawPayload && rawPayload.allowedMentions ? rawPayload.allowedMentions : {})
+      }
+    };
 
     if (this.isSlash) {
       if (this.interaction.deferred) {

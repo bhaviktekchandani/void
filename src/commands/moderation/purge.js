@@ -82,11 +82,12 @@ module.exports = {
     });
 
     // 6. Response
-    const embed = voidEmbeds.success(
-      `Successfully purged **${deletedCount}** message${deletedCount === 1 ? '' : 's'}.${
-        deletedCount < count ? ' (Messages older than 14 days cannot be bulk-deleted).' : ''
-      }`
-    );
+    const embed = voidEmbeds.purgeReport({
+      deletedCount,
+      channel: ctx.channel,
+      moderator: ctx.user,
+      requestedCount: count
+    });
 
     const sent = await ctx.reply({ embeds: [embed] });
 

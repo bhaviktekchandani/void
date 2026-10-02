@@ -59,9 +59,13 @@ module.exports = {
       channelName: ctx.channel.name
     });
 
-    const userTag = targetUser.tag || targetUser.username || targetUser.id;
     return ctx.reply({
-      embeds: [voidEmbeds.success(`Cleared **${clearedCount}** warning(s) for **${userTag}**.`)]
+      embeds: [voidEmbeds.clearWarningsReport({
+        target: targetUser,
+        clearedCount,
+        moderator: ctx.user,
+        remainingWarnings: 0
+      })]
     });
   }
 };

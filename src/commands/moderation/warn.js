@@ -111,13 +111,12 @@ module.exports = {
     }
 
     // 5. Attempt DM notification safely
-    try {
-      await targetUser.send({
-        content: `You received a warning in **${ctx.guild.name}**: ${reason}`
-      }).catch(() => null);
-    } catch {
-      // DMs closed, ignore safely
-    }
+    const dmStatus = await ctx.services.moderationService.notifyTargetDM({
+      target: targetUser,
+      action: 'WARN',
+      guild: ctx.guild,
+      reason
+    });
 
     // 6. Log to mod log channel
     await ctx.services.moderationService.sendLogMessage({
@@ -127,16 +126,25 @@ module.exports = {
       action: 'WARN',
       reason,
       caseNumber,
-      channelName: ctx.channel.name
+      channelName: ctx.channel.name,
+      dmStatus
     });
 
-    // 7. Response
+    // 7. Query history
+    const history = await ctx.services.moderationService.getTargetStats(ctx.guild.id, targetUser.id);
+
+    // 8. Response
     const embed = voidEmbeds.moderationAction({
       action: 'Warned',
       target: targetUser,
+      targetMember,
       moderator: ctx.user,
       reason,
-      caseNumber
+      caseNumber,
+      guild: ctx.guild,
+      dmStatus,
+      history,
+      channelName: ctx.channel.name
     });
 
     return ctx.reply({ embeds: [embed] });

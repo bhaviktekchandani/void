@@ -322,13 +322,15 @@ class AutoModService {
             caseNumber,
             channelName: message.channel.name
           });
-          await logChan.send({ embeds: [logEmbed] }).catch(() => null);
+          await logChan.send({ embeds: [logEmbed], allowedMentions: { parse: [] } }).catch(() => null);
         }
       }
 
-      // 4. Temporary channel warning notice
+      // 4. Temporary channel warning notice (zero unnecessary pings)
+      const authorDisplay = message.author.tag || message.author.username || message.author.id;
       const notice = await message.channel.send({
-        content: `**VOID AutoMod:** <@${message.author.id}>, your message was removed (${violation.reason}).`
+        content: `**VOID AutoMod:** \`${authorDisplay}\` (\`${message.author.id}\`), your message was removed (${violation.reason}).`,
+        allowedMentions: { parse: [] }
       }).catch(() => null);
 
       if (notice) {
