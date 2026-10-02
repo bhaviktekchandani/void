@@ -11,12 +11,13 @@ describe('Shared Command Registry & Execution Layer', () => {
 
   const EXPECTED_COMMANDS = [
     'ban', 'unban', 'kick', 'timeout', 'untimeout',
-    'warn', 'warnings', 'purge', 'lock', 'unlock',
-    'slowmode', 'case', 'help', 'userinfo',
-    'prefix', 'config', 'setup'
+    'warn', 'warnings', 'clearwarnings', 'softban', 'purge',
+    'lock', 'unlock', 'slowmode', 'case', 'reason',
+    'modhistory', 'notes', 'help', 'userinfo', 'avatar', 'botinfo',
+    'prefix', 'config', 'setup', 'automod', 'antiraid'
   ];
 
-  test('loads all 17 expected commands', () => {
+  test('loads all 26 expected commands', () => {
     for (const cmdName of EXPECTED_COMMANDS) {
       const cmd = commandRegistry.get(cmdName);
       assert.ok(cmd, `Command '${cmdName}' should be registered`);

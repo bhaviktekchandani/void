@@ -35,6 +35,21 @@ describe('Case & Warning Service Resiliency', () => {
     assert.equal(count, 0);
   });
 
+  test('caseService updateReason returns null gracefully without database', async () => {
+    const res = await caseService.updateReason('guild_offline_1', 1, 'Updated reason');
+    assert.equal(res, null);
+  });
+
+  test('caseService countUserCases returns 0 gracefully without database', async () => {
+    const count = await caseService.countUserCases('guild_offline_1', 'target_1');
+    assert.equal(count, 0);
+  });
+
+  test('warningService clearWarnings returns 0 gracefully without database', async () => {
+    const count = await warningService.clearWarnings('guild_offline_1', 'target_1');
+    assert.equal(count, 0);
+  });
+
   test('rejects case creation with missing parameters', async () => {
     await assert.rejects(
       async () => {

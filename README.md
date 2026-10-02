@@ -1,6 +1,6 @@
 # VOID
 
-VOID is a fast, reliable, visually distinctive Discord moderation bot built with Node.js, `discord.js` v14, and PostgreSQL. It features a unified dual-command interface (Discord Slash Commands and traditional Prefix Commands), an original minimalist charcoal-and-black embed design, strict role-hierarchy checks, sequential case tracking, and server-isolated persistence.
+VOID is a fast, reliable, visually distinctive Discord moderation system built with Node.js, `discord.js` v14, and PostgreSQL. It features a unified dual-command interface (Discord Slash Commands and traditional Prefix Commands), an original minimalist charcoal-and-black embed design, strict role-hierarchy checks, sequential case tracking, automated moderation rules, anti-raid safeguards, and server-isolated persistence.
 
 ---
 
@@ -11,35 +11,83 @@ VOID is a fast, reliable, visually distinctive Discord moderation bot built with
 - **Shared Execution Architecture**: A single command handler drives both interfaces, ensuring consistent validation, permission checking, error reporting, and logging.
 - **Restrained Visual Design**: Pure black (`#000000`) and charcoal (`#111111`) layout without colorful distractions, technical clutter, or promotional footers.
 - **Resilient Emoji System**: Centralized emoji registry with automatic Unicode fallbacks (`✓`, `✕`, `⚠`, `◆`, `◇`, `⚙`).
+- **Stateful Channel Locking**: Preserves pre-existing channel permission overwrites and accurately restores them on unlock.
+- **Advanced AutoMod Engine**: Configurable spam rate limiting, duplicate message detection, mention bomb protection, invite blocking, and word blacklisting.
+- **Anti-Raid Protection**: Sliding-window join spike detection with automatic mod-log alerting and optional lockdown mode.
+- **Staff Notes & Warning Clear**: Internal staff notes and full warning lifecycle management with interactive pagination.
 - **Role Hierarchy & Safety**: Comprehensive checks prevent self-targeting, bot-targeting, server-owner targeting, and moderating members with equal or higher roles.
-- **PostgreSQL Persistence**: Isolated per-guild tables for sequential case tracking, warnings history, and server configurations.
-- **Configurable Moderation Logging**: Real-time audit logs dispatched to a designated channel.
+- **PostgreSQL Persistence**: Isolated per-guild tables for sequential case tracking, warnings history, moderator notes, and server configurations.
+- **Audit Logging**: Real-time audit logs dispatched to designated log channels for member joins, leaves, role updates, timeouts, and bans.
 
 ---
 
 ## Commands
 
-All 17 commands are implemented and functional across both interfaces:
+All 26 commands are fully implemented and functional across both slash and prefix interfaces:
 
-| Command | Category | Description | Prefix Example | Slash Equivalent |
-| :--- | :--- | :--- | :--- | :--- |
-| `help` | Utility | Display command list & syntax | `.?help` / `.?help ban` | `/help [command]` |
-| `userinfo` | Utility | View account & member information | `.?userinfo @user` | `/userinfo [user]` |
-| `ban` | Moderation | Ban a user from the server | `.?ban @user Spamming` | `/ban user:<@user> [reason]` |
-| `unban` | Moderation | Unban a user by their user ID | `.?unban 123456789 Appeal accepted` | `/unban user_id:<id> [reason]` |
-| `kick` | Moderation | Kick a member from the server | `.?kick @user Inappropriate language` | `/kick user:<@user> [reason]` |
-| `timeout` | Moderation | Timeout a member (1s to 28d) | `.?timeout @user 10m Flooding chat` | `/timeout user:<@user> duration:<10m> [reason]` |
-| `untimeout` | Moderation | Remove active timeout from member | `.?untimeout @user Apologized` | `/untimeout user:<@user> [reason]` |
-| `warn` | Moderation | Issue a formal recorded warning | `.?warn @user Please review #rules` | `/warn user:<@user> reason:<text>` |
-| `warnings` | Moderation | View stored warnings for a member | `.?warnings @user` | `/warnings user:<@user>` |
-| `purge` | Moderation | Bulk-delete messages (1-100) | `.?purge 25` | `/purge amount:<25>` |
-| `lock` | Moderation | Prevent members from chatting | `.?lock Maintenance in progress` | `/lock [reason]` |
-| `unlock` | Moderation | Re-enable chatting for members | `.?unlock Resuming discussions` | `/unlock [reason]` |
-| `slowmode` | Moderation | Set channel rate limit (0-21600s) | `.?slowmode 5` | `/slowmode seconds:<5>` |
-| `case` | Moderation | View case details by number | `.?case 12` | `/case number:<12>` |
-| `prefix` | Configuration| View or change server prefix | `.?prefix set !` | `/prefix view` / `/prefix set new_prefix:!` |
-| `config` | Configuration| Manage server configuration | `.?config logchannel #mod-logs` | `/config <view \| prefix \| logchannel>` |
-| `setup` | Configuration| Onboard & review server settings | `.?setup logchannel #mod-logs` | `/setup <overview \| logchannel>` |
+### Moderation Commands (17)
+| Command | Purpose | Prefix Example | Slash Equivalent |
+| :--- | :--- | :--- | :--- |
+| `ban` | Ban a member from the server | `.?ban @user Spamming` | `/ban user:<@user> [reason]` |
+| `unban` | Unban a user by user ID | `.?unban 123456789 Appeal accepted` | `/unban user_id:<id> [reason]` |
+| `kick` | Kick a member from the server | `.?kick @user Inappropriate behavior` | `/kick user:<@user> [reason]` |
+| `softban` | Ban and unban to purge messages | `.?softban @user Clean chat` | `/softban user:<@user> [reason]` |
+| `timeout` | Timeout member (1s to 28d) | `.?timeout @user 10m Flooding` | `/timeout user:<@user> duration:<10m> [reason]` |
+| `untimeout` | Remove active timeout | `.?untimeout @user Apologized` | `/untimeout user:<@user> [reason]` |
+| `warn` | Issue a formal recorded warning | `.?warn @user Rule 1 violation` | `/warn user:<@user> reason:<text>` |
+| `warnings` | View warnings for a member | `.?warnings @user` | `/warnings user:<@user>` |
+| `clearwarnings` | Clear all warnings for member | `.?clearwarnings @user` | `/clearwarnings user:<@user>` |
+| `purge` | Bulk-delete messages (1-100) | `.?purge 25` | `/purge amount:<25>` |
+| `lock` | Lock channel (stateful) | `.?lock Maintenance` | `/lock [reason]` |
+| `unlock` | Unlock channel (restore state)| `.?unlock Resuming chat` | `/unlock [reason]` |
+| `slowmode` | Set rate limit (0-21600s) | `.?slowmode 5` | `/slowmode seconds:<5>` |
+| `case` | View specific case details | `.?case 12` | `/case number:<12>` |
+| `reason` | Update reason of an existing case | `.?reason 12 Updated evidence` | `/reason number:<12> reason:<text>` |
+| `modhistory` | Member moderation history | `.?modhistory @user` | `/modhistory user:<@user>` |
+| `notes` | Manage staff notes | `.?notes add @user Suspicious alt` | `/notes <add \| view \| remove>` |
+
+### Configuration & Automation Commands (5)
+| Command | Purpose | Prefix Example | Slash Equivalent |
+| :--- | :--- | :--- | :--- |
+| `prefix` | View or change server prefix | `.?prefix set !` | `/prefix view` / `/prefix set new_prefix:!` |
+| `config` | Server configuration manager | `.?config logchannel #mod-logs` | `/config <view \| prefix \| logchannel>` |
+| `setup` | Onboarding & settings overview | `.?setup logchannel #mod-logs` | `/setup <overview \| logchannel>` |
+| `automod` | Configure automated rules | `.?automod spam on 5` | `/automod <view \| toggle \| spam \| invites \| mentions \| action \| word>` |
+| `antiraid` | Configure join spike safeguards | `.?antiraid threshold 8 10` | `/antiraid <view \| toggle \| threshold \| action \| clear>` |
+
+### Utility Commands (4)
+| Command | Purpose | Prefix Example | Slash Equivalent |
+| :--- | :--- | :--- | :--- |
+| `help` | Interactive category help explorer | `.?help` / `.?help ban` | `/help [command]` |
+| `userinfo` | View account & member details | `.?userinfo @user` | `/userinfo [user]` |
+| `avatar` | View high-res user avatar | `.?avatar @user` | `/avatar [user]` |
+| `botinfo` | View system specs & uptime | `.?botinfo` | `/botinfo` |
+
+---
+
+## AutoMod Engine
+
+AutoMod runs before command dispatching on incoming messages. Members with `ManageMessages` or `Administrator` automatically bypass AutoMod.
+
+- **Invite Links**: Blocks `discord.gg/...`, `discord.com/invite/...`.
+- **External Links**: Blocks generic URLs (`https://...`).
+- **Blocked Words**: Matches restricted phrases using word-boundary regexes.
+- **Mention Flood**: Blocks messages with excessive user/role pings.
+- **Message Flood**: Rate limits rapid message bursts.
+- **Duplicate Spam**: Detects identical messages sent repeatedly.
+- **Configurable Actions**: `DELETE`, `WARN`, or `TIMEOUT` (with audit log notification).
+
+---
+
+## Anti-Raid Safeguards
+
+Detects coordinated join spikes using sliding-window metrics:
+- Tracks member joins per guild over configurable interval.
+- When threshold is breached:
+  - Dispatches immediate alert embed to the moderation log channel.
+  - Can optionally flag server lockdown.
+  - Moderators can inspect status and clear lockdown via `.?antiraid clear` or `/antiraid clear`.
+- Does **not** mass-ban automatically to prevent false positives.
 
 ---
 
@@ -62,15 +110,15 @@ All 17 commands are implemented and functional across both interfaces:
 
 ### 1. Required Privileged Gateway Intents
 Under **Discord Developer Portal > Applications > [Your App] > Bot**:
-- **Message Content Intent** (Required): **MUST be enabled** for the bot to read message content for prefix commands (`.?`).
-- Server Members Intent: Recommended if fetching non-cached members across large servers.
+- **Message Content Intent** (Mandatory): Required for the bot to read message content for prefix commands (`.?`) and AutoMod rules.
+- **Server Members Intent** (Optional / Recommended): Required if tracking join/leave events across servers larger than unverified limits.
 
 ### 2. Required Bot Permissions
 Generate the bot invite URL under **OAuth2 > URL Generator** with the `bot` and `applications.commands` scopes and the following permissions (integer `1099511627798` or Administrator):
 - Ban Members
 - Kick Members
 - Moderate Members (Timeout)
-- Manage Messages (Purge)
+- Manage Messages (Purge / AutoMod deletion)
 - Manage Channels (Lock / Unlock / Slowmode)
 - View Channels
 - Send Messages
@@ -110,12 +158,11 @@ npm install
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env with your credentials
 
 # 3. Run database migrations (if DATABASE_URL is configured)
 npm run migrate
 
-# 4. Register slash commands with Discord
+# 4. Register all 26 slash commands with Discord
 npm run register
 
 # 5. Start the bot
@@ -134,54 +181,13 @@ npm test
 
 The schema initializes automatically on bot launch or via `npm run migrate`.
 
-- **`guild_configs`**: Stores per-server settings (`guild_id`, `prefix`, `log_channel_id`, timestamps).
-- **`moderation_cases`**: Guild-isolated sequential case records (`guild_id`, `case_number`, `target_id`, `moderator_id`, `action`, `reason`, `duration`, `created_at`).
-- **`warnings`**: Member warning logs linked to cases (`guild_id`, `target_id`, `moderator_id`, `reason`, `case_id`, `created_at`).
-- **`moderator_notes`**: Internal staff notes table prepared for future extensions.
-
----
-
-## Railway Deployment Guide
-
-Deploying VOID to Railway takes less than 5 minutes:
-
-### 1. Push Code to GitHub
-```bash
-git init
-git add .
-git commit -m "feat: initial VOID release"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo>.git
-git push -u origin main
-```
-
-### 2. Create Railway Project
-1. Log in to [Railway](https://railway.com/).
-2. Click **New Project** > **Provision PostgreSQL**.
-3. In the same project, click **New** > **GitHub Repo** and select your repository.
-
-### 3. Configure Environment Variables in Railway
-In your application service settings under **Variables**:
-- `DATABASE_URL`: Add Reference > select the PostgreSQL service's `DATABASE_URL`.
-- `DISCORD_TOKEN`: Paste your Discord bot token.
-- `CLIENT_ID`: Paste your Discord application ID.
-- `LOG_LEVEL`: `INFO`.
-
-### 4. Deploy & Verify
-1. Railway will automatically build the service using `railway.json` and run `npm start`.
-2. Inspect the **Deployment Logs** to confirm the bot logs in:
-   ```
-   [INFO] Initializing VOID...
-   [INFO] Connected to PostgreSQL database successfully.
-   [INFO] Database schema migration completed successfully.
-   [INFO] Loaded 17 commands across 3 categories.
-   [INFO] VOID online as VOID#0000 (ID: ...)
-   ```
-3. Run the slash command deployer once locally or in Railway's CLI:
-   ```bash
-   npm run register
-   ```
-4. Test in Discord using both `.?help` and `/help`.
+- **`guild_configs`**: Stores per-server settings (`guild_id`, `prefix`, `log_channel_id`, `event_log_channel_id`, audit flags).
+- **`moderation_cases`**: Guild-isolated sequential case records (`guild_id`, `case_number`, `target_id`, `moderator_id`, `action`, `reason`, `duration`).
+- **`warnings`**: Member warning logs linked to cases (`guild_id`, `target_id`, `moderator_id`, `reason`, `case_id`).
+- **`moderator_notes`**: Internal staff notes table (`guild_id`, `target_id`, `moderator_id`, `note`, `created_at`).
+- **`channel_locks`**: Pre-lock channel overwrite bitfields for stateful restoration.
+- **`automod_configs`**: Per-server AutoMod rules, thresholds, and word blacklists.
+- **`antiraid_configs`**: Join-rate thresholds and lockdown status.
 
 ---
 

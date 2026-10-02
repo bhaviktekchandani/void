@@ -39,7 +39,7 @@ class CaseService {
           `INSERT INTO moderation_cases
            (guild_id, case_number, target_id, target_tag, moderator_id, moderator_tag, action, reason, duration, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-           RETURNING id, case_number, guild_id, action, created_at`,
+           RETURNING id, case_number, guild_id, target_id, moderator_id, action, reason, duration, created_at`,
           [
             guildId,
             nextCaseNumber,
@@ -83,24 +83,75 @@ class CaseService {
   }
 
   /**
-   * Fetch cases for a specific user in a guild.
+   * Update the reason for an existing case in a guild.
+   * @param {string} guildId
+   * @param {number} caseNumber
+   * @param {string} newReason
+   * @param {string} [moderatorId]
+   * @returns {Promise<object|null>}
+   */
+  async updateReason(guildId, caseNumber, newReason, moderatorId) {
+    if (!guildId || !caseNumber || !newReason) return null;
+
+    try {
+      const res = await query(
+        `UPDATE moderation_cases
+         SET reason = $1
+         WHERE guild_id = $2 AND case_number = $3
+         RETURNING *`,
+        [newReason, guildId, parseInt(caseNumber, 10)]
+      );
+      return res.rows[0] || null;
+    } catch (err) {
+      logger.error(`Failed to update reason for case #${caseNumber} in guild ${guildId}`, err);
+      return null;
+    }
+  }
+
+  /**
+   * Fetch cases for a specific user in a guild with pagination support.
    * @param {string} guildId
    * @param {string} targetId
    * @param {number} [limit=10]
+   * @param {number} [offset=0]
    * @returns {Promise<object[]>}
    */
-  async getUserCases(guildId, targetId, limit = 10) {
+  async getUserCases(guildId, targetId, limit = 10, offset = 0) {
     if (!guildId || !targetId) return [];
 
     try {
       const res = await query(
-        'SELECT * FROM moderation_cases WHERE guild_id = $1 AND target_id = $2 ORDER BY case_number DESC LIMIT $3',
-        [guildId, targetId, limit]
+        `SELECT * FROM moderation_cases
+         WHERE guild_id = $1 AND target_id = $2
+         ORDER BY case_number DESC
+         LIMIT $3 OFFSET $4`,
+        [guildId, targetId, limit, offset]
       );
       return res.rows;
     } catch (err) {
       logger.error(`Failed to fetch cases for user ${targetId} in guild ${guildId}`, err);
       return [];
+    }
+  }
+
+  /**
+   * Count total cases for a specific user in a guild.
+   * @param {string} guildId
+   * @param {string} targetId
+   * @returns {Promise<number>}
+   */
+  async countUserCases(guildId, targetId) {
+    if (!guildId || !targetId) return 0;
+
+    try {
+      const res = await query(
+        'SELECT COUNT(*) AS count FROM moderation_cases WHERE guild_id = $1 AND target_id = $2',
+        [guildId, targetId]
+      );
+      return parseInt(res.rows[0].count, 10) || 0;
+    } catch (err) {
+      logger.error(`Failed to count cases for user ${targetId} in guild ${guildId}`, err);
+      return 0;
     }
   }
 }

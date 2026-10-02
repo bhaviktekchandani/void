@@ -240,6 +240,140 @@ const voidEmbeds = {
     const embed = createBaseEmbed(COLORS.CHARCOAL);
     embed.setDescription(`${getEmoji('SUCCESS')} ${message}`);
     return embed;
+  },
+
+  /**
+   * Embed for moderator notes list
+   */
+  notesList({ target, notes, total, page = 1, totalPages = 1 }) {
+    const embed = createBaseEmbed(COLORS.CHARCOAL);
+    const userTag = target.tag || target.username || target.id;
+    embed.setTitle(`Staff Notes: ${userTag}`);
+
+    if (!notes || notes.length === 0) {
+      embed.setDescription('No staff notes recorded for this user.');
+      return embed;
+    }
+
+    embed.setDescription(`Showing ${notes.length} of ${total} note(s) • Page ${page}/${totalPages}`);
+
+    const fields = notes.map((n) => {
+      const date = n.created_at ? new Date(n.created_at).toLocaleDateString() : 'N/A';
+      return {
+        name: `Note #${n.id} • ${date} (by <@${n.moderator_id}>)`,
+        value: n.note,
+        inline: false
+      };
+    });
+
+    embed.addFields(fields);
+    return embed;
+  },
+
+  /**
+   * Embed for full moderation history (cases)
+   */
+  modHistory({ target, cases, total, page = 1, totalPages = 1 }) {
+    const embed = createBaseEmbed(COLORS.CHARCOAL);
+    const userTag = target.tag || target.username || target.id;
+    embed.setTitle(`Moderation History: ${userTag}`);
+
+    if (!cases || cases.length === 0) {
+      embed.setDescription('Clean record. No moderation cases found.');
+      return embed;
+    }
+
+    embed.setDescription(`Total cases on file: **${total}** • Page ${page}/${totalPages}`);
+
+    const fields = cases.map((c) => {
+      const date = c.created_at ? new Date(c.created_at).toLocaleDateString() : 'N/A';
+      const dur = c.duration ? ` (${c.duration})` : '';
+      return {
+        name: `Case #${c.case_number} • ${c.action}${dur} • ${date}`,
+        value: `**Reason:** ${c.reason || 'None specified'}\n**Mod:** <@${c.moderator_id}>`,
+        inline: false
+      };
+    });
+
+    embed.addFields(fields);
+    return embed;
+  },
+
+  /**
+   * Embed for AutoMod configuration overview
+   */
+  automodOverview({ config, guildName }) {
+    const embed = createBaseEmbed(COLORS.CHARCOAL);
+    embed.setTitle(`${getEmoji('CONFIG')} AutoMod Configuration`);
+    embed.setDescription(`Automated moderation rules for **${guildName}**.`);
+
+    const status = config.enabled ? `\`ENABLED\` (Action: \`${config.action}\`)` : '`DISABLED`';
+    const wordsCount = config.blocked_words ? config.blocked_words.length : 0;
+
+    embed.addFields([
+      { name: 'System Status', value: status, inline: true },
+      { name: 'Spam Rate Limit', value: config.spam_enabled ? `${config.spam_max_messages} msgs / ${config.spam_interval_sec}s` : 'Off', inline: true },
+      { name: 'Mention Limit', value: config.mention_limit > 0 ? `Max ${config.mention_limit} mentions` : 'Off', inline: true },
+      { name: 'Discord Invites', value: config.invites_blocked ? 'Blocked' : 'Allowed', inline: true },
+      { name: 'External Links', value: config.links_blocked ? 'Blocked' : 'Allowed', inline: true },
+      { name: 'Blocked Words', value: `${wordsCount} phrase(s) configured`, inline: true }
+    ]);
+
+    return embed;
+  },
+
+  /**
+   * Embed for Anti-Raid configuration overview
+   */
+  antiraidOverview({ config, guildName }) {
+    const embed = createBaseEmbed(COLORS.CHARCOAL);
+    embed.setTitle(`${getEmoji('CONFIG')} Anti-Raid Protection`);
+    embed.setDescription(`Join spike safeguards for **${guildName}**.`);
+
+    const status = config.enabled ? '`ACTIVE`' : '`DISABLED`';
+    const lockdown = config.is_locked_down ? '`LOCKED DOWN` 🔒' : 'Normal';
+
+    embed.addFields([
+      { name: 'Status', value: status, inline: true },
+      { name: 'Threshold', value: `${config.join_threshold} joins / ${config.interval_sec}s`, inline: true },
+      { name: 'Raid Action', value: `\`${config.action}\``, inline: true },
+      { name: 'Current State', value: lockdown, inline: false }
+    ]);
+
+    return embed;
+  },
+
+  /**
+   * Embed for botinfo command
+   */
+  botInfo({ uptime, guildsCount, usersCount, nodeVersion, djsVersion }) {
+    const embed = createBaseEmbed(COLORS.CHARCOAL);
+    embed.setTitle(`VOID — System Information`);
+    embed.setDescription(`Fast, reliable, extensible Discord moderation system.`);
+
+    embed.addFields([
+      { name: 'Uptime', value: uptime, inline: true },
+      { name: 'Servers', value: `${guildsCount}`, inline: true },
+      { name: 'Cached Members', value: `${usersCount}`, inline: true },
+      { name: 'Node.js', value: nodeVersion, inline: true },
+      { name: 'discord.js', value: `v${djsVersion}`, inline: true },
+      { name: 'Database', value: 'PostgreSQL', inline: true }
+    ]);
+
+    return embed;
+  },
+
+  /**
+   * Embed for avatar command
+   */
+  avatar({ user }) {
+    const embed = createBaseEmbed(COLORS.CHARCOAL);
+    const userTag = user.tag || user.username;
+    embed.setTitle(`Avatar — ${userTag}`);
+    const url = user.displayAvatarURL({ size: 1024, dynamic: true });
+    embed.setImage(url);
+    embed.setDescription(`[Open Image Link](${url})`);
+    return embed;
   }
 };
 

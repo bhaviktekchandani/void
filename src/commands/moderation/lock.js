@@ -1,6 +1,6 @@
 /**
  * VOID Lock Command
- * Locks the current channel by denying SendMessages for @everyone.
+ * Locks the current channel while preserving original overwrite configuration for restoration.
  */
 
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
@@ -46,11 +46,14 @@ module.exports = {
 
     const reason = ctx.getString('reason') || 'No reason specified';
 
-    // 2. Adjust channel permissions
+    // 2. Adjust channel permissions using lockService to preserve state
     try {
-      await ctx.channel.permissionOverwrites.edit(ctx.guild.roles.everyone, {
-        SendMessages: false
-      }, { reason: `${reason} | Moderator: ${ctx.user.tag || ctx.user.username}` });
+      await ctx.services.lockService.lockChannel({
+        channel: ctx.channel,
+        guild: ctx.guild,
+        moderatorId: ctx.user.id,
+        reason
+      });
     } catch (err) {
       return ctx.error(`Failed to lock channel: ${err.message}`);
     }

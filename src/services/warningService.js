@@ -1,6 +1,6 @@
 /**
  * VOID Warning Service
- * Tracks and retrieves member warnings per guild.
+ * Tracks, retrieves, and clears member warnings per guild.
  */
 
 const { query } = require('../database/pool');
@@ -37,13 +37,14 @@ class WarningService {
   }
 
   /**
-   * Get warnings for a target user in a guild, joined with case number if available.
+   * Get warnings for a target user in a guild with pagination support.
    * @param {string} guildId
    * @param {string} targetId
-   * @param {number} [limit=25]
+   * @param {number} [limit=10]
+   * @param {number} [offset=0]
    * @returns {Promise<object[]>}
    */
-  async getWarnings(guildId, targetId, limit = 25) {
+  async getWarnings(guildId, targetId, limit = 10, offset = 0) {
     if (!guildId || !targetId) return [];
 
     try {
@@ -54,8 +55,8 @@ class WarningService {
          LEFT JOIN moderation_cases c ON w.case_id = c.id
          WHERE w.guild_id = $1 AND w.target_id = $2
          ORDER BY w.created_at DESC
-         LIMIT $3`,
-        [guildId, targetId, limit]
+         LIMIT $3 OFFSET $4`,
+        [guildId, targetId, limit, offset]
       );
       return res.rows;
     } catch (err) {
@@ -81,6 +82,27 @@ class WarningService {
       return parseInt(res.rows[0].count, 10) || 0;
     } catch (err) {
       logger.error(`Failed to count warnings for user ${targetId} in guild ${guildId}`, err);
+      return 0;
+    }
+  }
+
+  /**
+   * Clear all warnings for a user in a guild.
+   * @param {string} guildId
+   * @param {string} targetId
+   * @returns {Promise<number>} Number of deleted warnings
+   */
+  async clearWarnings(guildId, targetId) {
+    if (!guildId || !targetId) return 0;
+
+    try {
+      const res = await query(
+        'DELETE FROM warnings WHERE guild_id = $1 AND target_id = $2 RETURNING id',
+        [guildId, targetId]
+      );
+      return res.rowCount || 0;
+    } catch (err) {
+      logger.error(`Failed to clear warnings for user ${targetId} in guild ${guildId}`, err);
       return 0;
     }
   }

@@ -1,6 +1,6 @@
 /**
  * VOID Unlock Command
- * Unlocks the current channel by resetting SendMessages for @everyone.
+ * Unlocks the current channel and accurately restores its pre-lock overwrite state.
  */
 
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
@@ -9,7 +9,7 @@ const { voidEmbeds } = require('../../embeds/builder');
 
 module.exports = {
   name: 'unlock',
-  description: 'Unlock the current channel so members can chat again.',
+  description: 'Unlock the current channel and restore its pre-lock state.',
   category: 'moderation',
   permissions: [PermissionFlagsBits.ManageChannels],
   botPermissions: [PermissionFlagsBits.ManageChannels],
@@ -18,7 +18,7 @@ module.exports = {
 
   slashBuilder: new SlashCommandBuilder()
     .setName('unlock')
-    .setDescription('Unlock the current channel so members can chat again.')
+    .setDescription('Unlock the current channel and restore its pre-lock state.')
     .addStringOption(opt =>
       opt.setName('reason')
         .setDescription('Reason for unlocking the channel')
@@ -46,11 +46,14 @@ module.exports = {
 
     const reason = ctx.getString('reason') || 'No reason specified';
 
-    // 2. Adjust channel permissions
+    // 2. Adjust channel permissions using lockService
     try {
-      await ctx.channel.permissionOverwrites.edit(ctx.guild.roles.everyone, {
-        SendMessages: null
-      }, { reason: `${reason} | Moderator: ${ctx.user.tag || ctx.user.username}` });
+      await ctx.services.lockService.unlockChannel({
+        channel: ctx.channel,
+        guild: ctx.guild,
+        moderatorId: ctx.user.id,
+        reason
+      });
     } catch (err) {
       return ctx.error(`Failed to unlock channel: ${err.message}`);
     }
@@ -66,7 +69,7 @@ module.exports = {
     });
 
     // 4. Response
-    const embed = voidEmbeds.success(`Channel \`#${ctx.channel.name}\` has been **unlocked**.`);
+    const embed = voidEmbeds.success(`Channel \`#${ctx.channel.name}\` has been **unlocked** (permissions restored).`);
     return ctx.reply({ embeds: [embed] });
   }
 };

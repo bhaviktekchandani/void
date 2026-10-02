@@ -6,6 +6,8 @@
 const { Client, GatewayIntentBits, Partials, Events } = require('discord.js');
 const { handleInteraction } = require('./handlers/interactionHandler');
 const { handleMessage } = require('./handlers/messageHandler');
+const { antiraidService } = require('./services/antiraidService');
+const { eventLogService } = require('./services/eventLogService');
 const { logger } = require('./utils/logger');
 
 function createClient() {
@@ -29,8 +31,51 @@ function createClient() {
     logger.info(`Serving ${readyClient.guilds.cache.size} server(s). Default prefix: .?`);
   });
 
+  // Core command listeners
   client.on(Events.InteractionCreate, handleInteraction);
   client.on(Events.MessageCreate, handleMessage);
+
+  // Lifecycle & audit event listeners
+  client.on(Events.GuildMemberAdd, async (member) => {
+    try {
+      await antiraidService.handleMemberJoin(member);
+      await eventLogService.logMemberJoin(member);
+    } catch (err) {
+      logger.error('Error handling GuildMemberAdd event', err);
+    }
+  });
+
+  client.on(Events.GuildMemberRemove, async (member) => {
+    try {
+      await eventLogService.logMemberLeave(member);
+    } catch (err) {
+      logger.error('Error handling GuildMemberRemove event', err);
+    }
+  });
+
+  client.on(Events.GuildMemberUpdate, async (oldMember, newMember) => {
+    try {
+      await eventLogService.logMemberUpdate(oldMember, newMember);
+    } catch (err) {
+      logger.error('Error handling GuildMemberUpdate event', err);
+    }
+  });
+
+  client.on(Events.GuildBanAdd, async (ban) => {
+    try {
+      await eventLogService.logBanAdd(ban);
+    } catch (err) {
+      logger.error('Error handling GuildBanAdd event', err);
+    }
+  });
+
+  client.on(Events.GuildBanRemove, async (ban) => {
+    try {
+      await eventLogService.logBanRemove(ban);
+    } catch (err) {
+      logger.error('Error handling GuildBanRemove event', err);
+    }
+  });
 
   client.on(Events.Warn, (info) => logger.warn(`Discord client warning: ${info}`));
   client.on(Events.Error, (err) => logger.error('Discord client encountered an error', err));

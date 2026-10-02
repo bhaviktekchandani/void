@@ -29,12 +29,15 @@ async function deployCommands() {
 
   const rest = new REST({ version: '10' }).setToken(token);
 
+  const isSnowflake = guildId && /^\d{17,20}$/.test(guildId.trim());
+
   try {
-    if (guildId) {
+    if (isSnowflake) {
       // Development server deployment (instant update)
-      logger.info(`Deploying commands to development guild ID: ${guildId}`);
+      const cleanGuildId = guildId.trim();
+      logger.info(`Deploying commands to development guild ID: ${cleanGuildId}`);
       const data = await rest.put(
-        Routes.applicationGuildCommands(clientId, guildId),
+        Routes.applicationGuildCommands(clientId, cleanGuildId),
         { body: commands }
       );
       logger.info(`Successfully registered ${data.length} guild slash commands.`);

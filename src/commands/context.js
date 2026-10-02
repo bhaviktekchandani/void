@@ -9,6 +9,11 @@ const { prefixService } = require('../services/prefixService');
 const { caseService } = require('../services/caseService');
 const { warningService } = require('../services/warningService');
 const { moderationService } = require('../services/moderationService');
+const { notesService } = require('../services/notesService');
+const { automodService } = require('../services/automodService');
+const { antiraidService } = require('../services/antiraidService');
+const { lockService } = require('../services/lockService');
+const { eventLogService } = require('../services/eventLogService');
 
 class CommandContext {
   /**
@@ -41,7 +46,12 @@ class CommandContext {
       prefixService,
       caseService,
       warningService,
-      moderationService
+      moderationService,
+      notesService,
+      automodService,
+      antiraidService,
+      lockService,
+      eventLogService
     };
 
     this.replied = false;
