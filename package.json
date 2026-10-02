@@ -1,0 +1,29 @@
+{
+  "name": "void-bot",
+  "version": "1.0.0",
+  "description": "VOID — Fast, reliable, visually distinctive Discord moderation bot.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "migrate": "node src/database/migrate.js",
+    "register": "node src/scripts/deployCommands.js",
+    "test": "node --test tests/**/*.test.js"
+  },
+  "keywords": [
+    "discord",
+    "discord-bot",
+    "moderation",
+    "void"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
